@@ -1,0 +1,34 @@
+Fung, Chun Lam
+A12158802
+Assignment 4
+Worked with Lu, Dexi
+
+For sploit1, we traced through GDB, analyzing memory content of the string we overflow the buffer with and comparing it to the return address of foo. 
+Since the buffer existed in foo's stack frame, we knew I had to overwrite the return address of foo. Hence, it took some guess-and-check to figure out
+the correct bits to overwrite. we also had to figure out the memory layout of the underyling architecture to be Little Endian.
+
+For sploit2, due to the less-than-equal check from the for-loop, it was possible to overflow the buffer by one-byte. Tracing through GDB and reading
+various sources, we was able to determine the next word after the buffer was the frame-pointer, in which the stack pointer will return to. Hence, I
+overwrote that one byte to redirect the call stack to an address within the buffer. Sepcifically, we inserted the address to our shellcode within the 
+buffer before the one-byte overflow. This address was offset by 4 bytes since the call stack increments the address by 4 bytes in order to get the
+next instruction. Hence, the call stack returns to the address of our shellcode within the buffer.
+
+For sploit3, we analyzed the code and realized that the variable 'count' needed to be represented as a negative number in two's complement in order
+to write more than the intended amount. we also had to make sure the source had to be larger than the destination buffer, and that there were enough 
+bytes from the source to copy (input to memcpy). Once we had that confirmed, I fixed the offset from the end of the buffer to the return address and
+overwrote it with the address back into the buffer where our shellcode resides.
+
+For sploit4, we take advantage of the get-after-free vulnerability that is present from the allocated q. I looked into how tfree works and realized
+we had to overwrite the first 8 bytes of p (in foo) to overwrite the location of the return address. However, tfree will also alter the bytes after
+the return location (to set free bit). Hence, we created a jump instruction to our shellcode and have tfree write the address of our jump instruction
+to the return address, then padded the next few bits with 1's in order to keep the free bit set. This allowed me to execute our shellcode without 
+tampering the shellcode instructions.
+
+For sploit5, we needed to insert a format string without any arguments. This will allow snprintf to continue popping off the stack for the argument,
+starting with where the argument should be. We first included  a %d format specifier to pop off the format string padding. To get the internal pointer
+within snprintf to point to where we want to write, we include the location to the return address to overwrite. Since %n writes the amount of bytes
+read as an int (4 bytes), we first write to the lower 4 bytes of the location to the return address. We repeat the same process for the upper 
+4 bytes. However, since %d pops off the previous int (4 bytes), we insert a dummy int (4 bytes) between the addresses. Next, we inject our shellcode
+before writing with %n. Finally, we include the address to our shellcode as the minimum width for %d. Since %n writes the amount of bytes read as an
+int, we convert our address into decimal and subtract the amount of bytes already read. Since our lower 4 bytes is greater in value than our upper
+4 bytes, we needed to overflow our upper address in order to get our internal snprintf pointer to point to a lower address.

@@ -1,0 +1,3 @@
+7C9A6AF7
+
+'; INSERT INTO posts(time, name, post_messages) VALUES ('now()', 'pardellaj', '7C9A6AF7 is l33t'); --

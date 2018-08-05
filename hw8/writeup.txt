@@ -1,0 +1,23 @@
+Our code first checks for TCP packet within the provided IP packet. It then
+extracts out the data within the TCP packet and runs some checks on the 
+HTTP header. If the packet is a GET request, we change the 'Accept-Encoding'
+tag within the HTTP header to accept only 'identity'. Furthermore, it checks
+the outgoing GET request HTTP headers for the domain and URL path. If it
+matches our target domain and URL path, we save the source and destination IP
+of the packet. When we receive incoming packets, we check that these packets 
+have source and destination packets from the target domain and URL paths, which
+we saved when making requests to servers. If a packet passes this check, we 
+then modify the 'Content-Length' header of the HTTP Response packet in order to
+accommodate the length of the iframe snippet we will inject before the closing
+'</body>' tag. Finally, we check for the closing '</body>' tag within the
+packet and inject our iframe snippet before the closing '</body>' tag.
+
+Some difficulties we faced were learning how the different protocols worked in
+establishing a connection. We also had some trouble learning regex patterns,
+which we overcame by trial and error using online Python regex builders. We
+also recognized the problem of maintaining the connection upon tampering with
+packets and offsetting packet sequence and acknowledgement numbers as well as
+the packet checksum. Despite knowing that we were supposed to deceive both the
+host and the server and adjust the numbers according to the amount of bytes we
+tamper both ends with, we were not able to keep the connection stable in the
+end, which resulted in a lot of TCP retransmissions. 
